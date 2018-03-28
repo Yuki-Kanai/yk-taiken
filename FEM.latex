@@ -1,0 +1,58 @@
+/gdocumentclass[11pt,a4paper]{jsarticle}
+
+/gusepackage{amsmath,amssymb}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{ascmac}
+\usepackage[dvipdfmx]{graphicx,color>}
+\usepackage[dvipdfmx]{hyperref}
+\usepackage{pxjahyper}
+\hypersetup{bookmarksnumbered=true,%
+ bookmarksopen=true,%
+ colorlinks=true,%
+ linkcolor=blue,
+ citecolor=red,
+}
+%
+\setlength{\textwidth}{\fullwidth}
+\setlength{\textheight}{39\baselineskip}
+\addtolength{\textheight}{\topskip}
+\setlength{\voffset}{-0.5in}
+\setlength{\headsep}{0.3in}
+%
+\newcommand{\divergence}{\mathrm{div}\,}  %ダイバージェンス
+\newcommand{\grad}{\mathrm{grad}\,}  %グラディエント
+\newcommand{\rot}{\mathrm{rot}\,}  %ローテーション
+\newcommand{\del}{\mathrm{partial},}
+%
+\pagestyle{myheadings}
+\markright{\footnotesize \sf @奥田・橋本研究室 \texttt{金井雄樹}}
+\begin{document}
+%
+%
+\section*{}
+拡散方程式が与えられていた時にそれを有限要素法で解く方法を以下に示す。
+なめらかな空間を$\Omega = \sum_e \Omega_e$と分割することを考える。また解はなめらか(たぶん$C^1$級で十分)
+とみなせる。
+\begin{equation}
+    \frac{\del \phi}{\del t} = D \frac{\del^2 \phi}{\del^2 x}
+\end{equation}
+の解$\phi(x,t)$を
+\begin{equation}
+    \phi(x,t) =  \phi_e(t)^\alpha N_e^\alpha(x,y)
+\end{equation}
+のように$e$で添数付けられた分割領域の第$alpha$接点における値とその頂点で1,
+その分割領域内の他の頂点で0をとるように定義した形状関数$N(x,y)$を用いて近似する。
+さらにこれを変分法に基づく変形を加える。任意関数$\del \phi$を用いて変分は
+\begin{equation}
+    \int_\Omega (\frac{\del \phi}{\del t} - D \frac{\del^2 \phi}{\del^2 x}) dV = 0
+\end{equation}
+と書くことができる。ここで第二項に関するガウスの発散定理と部分積分により
+\begin{equation}
+    \int_\Omega (\frac{\del \phi}{\del t} + D (\nabla \phi)( \nabla \phi) dV = \int_\Omega dS
+\end{equation}
+
+%
+
+%
+¥end{document}
