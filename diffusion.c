@@ -72,7 +72,7 @@ void get_localNN(double* localNN, int elem, int is_NN){
     double x0 = get_x(elem), y0 = get_y(elem);
     double LP_roots[5] = LP_root, LP_weights[5] = LP_weight;
     double Jacobs[4];
-    double temp[4][16];//for each 2*2 GL integration fieldごと。
+    double temp[4][16];//for each 2*2 GL integration field
     reset_matrix_double(localNN, 16);
     for(i=0; i!=5; i++){
         for(j=0; j!=5; j++){
@@ -166,7 +166,7 @@ void LU_factorize(double* C, double* L, double* P, double* S, int size){
         }
 
         if((i*10)/size > l){
-            printf("\rGauss Elimination on progress:%d0%%完了",l);
+            printf("\rGauss Elimination on progress:%d0%% completed ",l);
             fflush(stdout);
             l++;
         }
@@ -209,7 +209,7 @@ void print_status(FILE *fp, const double* phi, int size, int i, double h){
 int main(int argc, char* argv[]){
     FILE* out;
     int i,j,k;
-    double h = 1e-6;//time sequence
+    double h = 1e-6;//time interval
     int itmax = 1e6;
     double D = 1;
     double* NN, *dNN, *C, *L, *P, *S, *temps;
@@ -285,7 +285,7 @@ int main(int argc, char* argv[]){
         mult_matrix(dNN, phi, b, size, size, 1);
         for(j=0; j!=size; j++)
             b[j] = -b[j];
-        //to set dphi/dt to 0 for dirichlet boundary
+        //to set dphi/dt to 0 for Dirichlet boundary
         for(j=0; j!=fix_bound_num; j++)
             b[fix_bound_i[j]] = 0;
         
