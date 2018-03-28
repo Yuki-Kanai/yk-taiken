@@ -73,7 +73,7 @@ void get_localNN(double* localNN, int elem, int is_NN){
     double x0 = get_x(elem), y0 = get_y(elem);
     double LP_roots[5] = LP_root, LP_weights[5] = LP_weight;
     double Jacobs[4];
-    double temp[4][16];//2*2のGL積分領域ごと。
+    double temp[4][16];//for each 2*2 GL integration fieldごと。
     reset_matrix_double(localNN, 16);
     for(i=0; i!=5; i++){
         for(j=0; j!=5; j++){
@@ -115,7 +115,7 @@ void flip_row(double* A, int i, int j, int size){
     free(array);
 }
 
-//size行の正方行列のLU分解,C：一般->上三角行列,L:下三角行列、P：ピボット選択を定める順列行列、S:スケーリング
+//LU decomposition of size*size square matrix,C: input -> upper triangle ,L: lower triangle 、P: Permutation matrix for Pivot Selection、S:scaling
 void LU_factorize(double* C, double* L, double* P, double* S, int size){
     printf("LU分解開始\n");
     reset_matrix_double(L, size*size);
@@ -123,7 +123,7 @@ void LU_factorize(double* C, double* L, double* P, double* S, int size){
     reset_matrix_double(S, size*size);
     int i,j,k,l, c_max_i;
     double c_max, temp;
-    //スケーリング
+    //scale
     /*for(j=0; j!=size; j++){
         for(l=0; l!= size; l++)
             printf("%.2e ",C[j*size+l]);
@@ -151,7 +151,7 @@ void LU_factorize(double* C, double* L, double* P, double* S, int size){
     l=0;
     printf("ガウス消去開始\n");
     for(i=0; i!= size-1; i++){
-        //ピボット選択
+        //Pivot selection
         c_max = fabs(C[i*size+i]);
         c_max_i = i;
         for(j=i+1; j!=size; j++){
@@ -167,8 +167,8 @@ void LU_factorize(double* C, double* L, double* P, double* S, int size){
             printf("\n");
         }
         printf("\n");*/
-        flip_row(P, i, c_max_i, size);//どういう交換がされたかの記録
-        flip_row(C, i, c_max_i, size);//ピボット交換後のA(i)
+        flip_row(P, i, c_max_i, size);//stores past exchanges
+        flip_row(C, i, c_max_i, size);//A(i) before gaussian delete
         flip_row(L, i, c_max_i, size);//
         
         /*for(j=0; j!=size; j++){
@@ -200,7 +200,7 @@ void LU_factorize(double* C, double* L, double* P, double* S, int size){
     printf("LU分解完了\n\n");
 }
 
-//正方行列LU分解の前進消去:Lc=b
+//forward substition of LU decomposition :Lc=b
 void forward_elimination(const double* L, double* c, const double * b, int n){
     int i,j;
     double temp;
@@ -214,7 +214,7 @@ void forward_elimination(const double* L, double* c, const double * b, int n){
     //printf("前進消去完了\n");
 }
 
-//正方行列LU分解の後退代入Ux=c
+//backward substition of LU decomposition Ux=c
 void backward_substitution(const double* U, double* x, const double* c, int n){
     int i,j;
     double temp;
@@ -244,11 +244,11 @@ void print_status(FILE *fp, const double* phi, int size, int i, double h){
 int main(int argc, char* argv[]){
     FILE* out;
     int i,j,k;
-    double h = 1e-6;//時間間隔
+    double h = 1e-6;//time sequence
     int itmax = 1e6;
     double D = 1;
     double* NN, *dNN, *C, *L, *P, *S, *temps;
-    int size = (cut_num+1)*(cut_num+1);//phiベクトルの次元数
+    int size = (cut_num+1)*(cut_num+1);//dimension of phi
     NN = (double*)malloc(sizeof(double)*size*size);
     dNN = (double*)malloc(sizeof(double)*size*size);
     C = (double*)malloc(sizeof(double)*size*size);
@@ -264,12 +264,12 @@ int main(int argc, char* argv[]){
     k=0;
     printf("要素ごとの要素剛性方程式を計算開始\n");
     for(i=0; i!=cut_num*cut_num; i++){
-        get_localNN(temp_localNN, i, 1);//16個の積
+        get_localNN(temp_localNN, i, 1);//16 products
         get_localNN(temp_localdNN, i, 0);
         for(j=0; j!=4; j++){
             for(k=0; k!=4; k++){
                 NN[get_global_index(i,j)* size+ get_global_index(i,k)] += temp_localNN[j*4+k];
-                dNN[get_global_index(i,j)* size+ get_global_index(i,k)] += temp_localdNN[j*4+k]*D; //注意、ここでD倍した。
+                dNN[get_global_index(i,j)* size+ get_global_index(i,k)] += temp_localdNN[j*4+k]*D; //warning: multiply D
             }
         }
         if((i*10)/(cut_num*cut_num)>k){
@@ -280,7 +280,7 @@ int main(int argc, char* argv[]){
     }
     printf("\n要素ごとの要素剛性方程式を計算完了\n");
     
-    //境界条件の設定
+    //Boundary setting
     double* fix_bound;
     int fix_bound_num = (cut_num+1)*2;
     fix_bound = (double*)malloc(sizeof(double)*fix_bound_num);
@@ -326,14 +326,14 @@ int main(int argc, char* argv[]){
     temp = (double*)malloc(sizeof(double)*size);
     out = fopen("result.data","w");
     
-    reset_matrix_double(phi, size);//0度の初期条件
+    reset_matrix_double(phi, size);//set to 0degrees for initial condition
     print_status(out, phi, size, 0, h);
-    //ループ
+
     for(i=0; i!= itmax; i++){
         mult_matrix(dNN, phi, b, size, size, 1);
         for(j=0; j!=size; j++)
-            b[j] = -b[j];//ここをなくすとなぜか良い値
-        //境界条件のところを固定するため
+            b[j] = -b[j];
+        //to set dphi/dt to 0 for dirichlet boundary
         for(j=0; j!=fix_bound_num; j++)
             b[fix_bound_i[j]] = 0;
         
@@ -353,7 +353,7 @@ int main(int argc, char* argv[]){
         
         for(j=0; j!=size; j++)
             phi[j] += x[j]*h;
-        //fix_bound処理。今回はdp/dt=0を代入するのでvectorに変化なし。
+        //For this case, the boundary is set by dphi/dt, so no change is required for vector b
         for(j=0; j!=fix_bound_num; j++){
             phi[fix_bound_i[j]] = fix_bound[j];
         }
