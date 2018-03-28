@@ -35,7 +35,7 @@ void mult_matrix(const double* A, const double* B, double* C, int ma, int mb, in
             }}}
 }
 
-//Product of two shape functions N1(x,y)*N1, N1*N2, ..., 返り値はdet J
+//Product of two shape functions N1(x,y)*N1, N1*N2, ..., Return det J
 double SF_generator(double x, double y, int elem_num, double* out_array, int is_NN){
     double g1 = (x- get_x(elem_num))*2 * cut_num - 1;
     double g2 = (y- get_y(elem_num))*2 * cut_num - 1;
@@ -46,7 +46,6 @@ double SF_generator(double x, double y, int elem_num, double* out_array, int is_
     J21 = 0, J22 = 2* cut_num;
     double detJ = J11*J22 - J21*J12;
     //To-do stderr if Ji==0
-    //double J11 = Ji22 / detJi, J12 = -Ji21 / detJi, J21 = -Ji12 / detJi, J22 = Ji11/ detJi;
     if(is_NN){
         double temp[4];
         temp[0] = (1-g1)*(1-g2)/4;
@@ -117,19 +116,13 @@ void flip_row(double* A, int i, int j, int size){
 
 //LU decomposition of size*size square matrix,C: input -> upper triangle ,L: lower triangle 、P: Permutation matrix for Pivot Selection、S:scaling
 void LU_factorize(double* C, double* L, double* P, double* S, int size){
-    printf("LU分解開始\n");
+    printf("Start LU factorization\n");
     reset_matrix_double(L, size*size);
     reset_matrix_double(P, size*size);
     reset_matrix_double(S, size*size);
     int i,j,k,l, c_max_i;
     double c_max, temp;
     //scale
-    /*for(j=0; j!=size; j++){
-        for(l=0; l!= size; l++)
-            printf("%.2e ",C[j*size+l]);
-        printf("\n");
-    }
-    printf("\n");*/
     for(i=0; i!=size; i++){
         c_max = fabs(C[i*size]);
         c_max_i = 0;
@@ -143,13 +136,13 @@ void LU_factorize(double* C, double* L, double* P, double* S, int size){
         for(j=0; j!=size; j++)
             C[i*size+j] /=c_max;
     }
-    printf("スケーリング完了\n");
+    printf("End Scaling\n");
     for(i=0; i!=size; i++){
         P[i*size+i] = 1;
         L[i*size+i] = 1;
     }
     l=0;
-    printf("ガウス消去開始\n");
+    printf("Start Gaussian Elimination\n");
     for(i=0; i!= size-1; i++){
         //Pivot selection
         c_max = fabs(C[i*size+i]);
@@ -160,23 +153,9 @@ void LU_factorize(double* C, double* L, double* P, double* S, int size){
                 c_max_i = j;
             }
         }
-        /*printf("%.2e\n\n",c_max);
-        for(j=0; j!=size; j++){
-            for(l=0; l!= size; l++)
-                printf("%.2e ",C[j*size+l]);
-            printf("\n");
-        }
-        printf("\n");*/
         flip_row(P, i, c_max_i, size);//stores past exchanges
         flip_row(C, i, c_max_i, size);//A(i) before gaussian delete
         flip_row(L, i, c_max_i, size);//
-        
-        /*for(j=0; j!=size; j++){
-            for(l=0; l!= size; l++)
-                printf("%.2e ",C[j*size+l]);
-            printf("\n");
-        }
-        printf("\n");*/
         
         for(j=i+1; j!=size; j++){
             temp = C[j*size+i]/C[i*size+i];
@@ -185,19 +164,14 @@ void LU_factorize(double* C, double* L, double* P, double* S, int size){
             for(k=i+1; k!=size; k++)
                 C[j*size+k] -= -temp * C[i*size+k];
         }
-        /*for(j=0; j!=size; j++){
-            for(l=0; l!= size; l++)
-                printf("%.2e ",C[j*size+l]);
-            printf("\n");
-        }
-        printf("\n");*/
+
         if((i*10)/size > l){
-            printf("\rガウス消去中:%d0%%完了",l);
+            printf("\rGauss Elimination on progress:%d0%%完了",l);
             fflush(stdout);
             l++;
         }
     }
-    printf("LU分解完了\n\n");
+    printf("End LU factorization\n\n");
 }
 
 //forward substition of LU decomposition :Lc=b
@@ -209,28 +183,19 @@ void forward_elimination(const double* L, double* c, const double * b, int n){
         for(j=0; j!=i; j++)
             temp -= b[j] * L[i*n+j];
         c[i] = temp/L[i*n+i];
-        //printf("%.2e ",c[i]);
     }
-    //printf("前進消去完了\n");
 }
 
 //backward substition of LU decomposition Ux=c
 void backward_substitution(const double* U, double* x, const double* c, int n){
     int i,j;
     double temp;
-    /*for(i=0; i!=n; i++){
-        for(j=0; j!=n; j++)
-            printf("%.2e ", U[i*n+j]);
-        printf("\n");
-    }printf("\n");*/
     for(i=n-1; i!=-1; i--){
         temp = c[i];
         for(j=n-1; j!= i; j--)
             temp -= c[j]*U[i*n+j];
         x[i] = temp/U[i*n+i];
-        //printf("%.2e ",x[i]);
     }
-    //printf("後退代入完了完了\n");
 }
 
 void print_status(FILE *fp, const double* phi, int size, int i, double h){
@@ -262,7 +227,7 @@ int main(int argc, char* argv[]){
     reset_matrix_double(dNN, size*size);
     
     k=0;
-    printf("要素ごとの要素剛性方程式を計算開始\n");
+    printf("Calculate element stiffness equation for each elements\n");
     for(i=0; i!=cut_num*cut_num; i++){
         get_localNN(temp_localNN, i, 1);//16 products
         get_localNN(temp_localdNN, i, 0);
@@ -274,11 +239,11 @@ int main(int argc, char* argv[]){
         }
         if((i*10)/(cut_num*cut_num)>k){
             k++;
-            printf("\r要素ごとの要素剛性方程式を計算中：%d0%%",k);
+            printf("\rCalculating ES equation：%d0%%",k);
             fflush(stdout);
         }
     }
-    printf("\n要素ごとの要素剛性方程式を計算完了\n");
+    printf("\nFinished calculating ES Equation\n");
     
     //Boundary setting
     double* fix_bound;
@@ -303,19 +268,6 @@ int main(int argc, char* argv[]){
     }
     for(i=0; i!= fix_bound_num; i++)
         NN[fix_bound_i[i]*(size+1)] = 1;
-    /*printf("NN:\n");
-    for(i=0; i!=size; i++){
-        for(j=0; j!=size; j++)
-            printf("%.2e ", NN[i*size+j]);
-        printf("\n");
-    }printf("\ndNN:\n");
-    for(i=0; i!=size; i++){
-        for(j=0; j!=size; j++)
-            printf("%.2e ", dNN[i*size+j]);
-        printf("\n");
-    }printf("\n");
-    for(i=0; i!=size*size; i++)
-        temps[i] = dNN[i];*/
     
     LU_factorize(NN, L, P, S, size);
     
@@ -359,7 +311,7 @@ int main(int argc, char* argv[]){
         }
         print_status(out, phi, size, i, h);
         if(i%100000==0){
-            printf("\n\ni=%dまで完了\n\n",i);
+            printf("\n\nfinished calculating until i=%d\n\n",i);
             printf("x[i]=\n");
             for(j=0; j!=(cut_num+1); j++)
                 for(k=0; k!= (cut_num+1); k++)
@@ -372,7 +324,7 @@ int main(int argc, char* argv[]){
             printf("\n\n");
         }
     }
-    printf("\n\n!!!完了!!!\n\n");
+    printf("\n\n!!!Finished!!!\n\n");
     free(NN); free(dNN); free(C); free(L); free(P); free(S); free(temps);
     free(b); free(x); free(phi); free(temp);
     free(fix_bound); free(fix_bound_i);
