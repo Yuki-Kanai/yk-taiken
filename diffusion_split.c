@@ -281,11 +281,14 @@ void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* 
                 elems[i*cut_size+j+(cut_size+1)*(cut_size+1)*2] = (cut_num-1-i)*(cut_num)+j;
                 elems[i*cut_size+j+(cut_size+1)*(cut_size+1)*3] = (cut_num-i)*(cut_num)-j-1;
             }
-        else{
-            cut_size = cut_num/2;//value would be small end of rectangle
-            for(i=0; i!=cut_size; i++){//short
-                for(j=0; j!=cut_size+1; j++){//long
-                    in_global_i[i*(cut_size+1)+j] = i*(cut_num+1)+j;
+        for(i=0; i!=4; i++)
+            elem_nums[i]=cut_size*cut_size;
+    }
+    else{
+        cut_size = cut_num/2;//value would be small end of rectangle
+        for(i=0; i!=cut_size; i++){//short
+            for(j=0; j!=cut_size+1; j++){//long
+                in_global_i[i*(cut_size+1)+j] = i*(cut_num+1)+j;
                     in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size] = i+cut_size+1 + (cut_num+1)*j;
                     in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size*2] = (i+cut_size+1)*(cut_num+1) + cut_size+j;
                     in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size*3] = i + (j+cut_size)*(cut_num+1);
@@ -325,10 +328,18 @@ void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* 
             in_nums[3] = cut_size*(cut_size+1)+1;
             bound_nums[3] = cut_size*2+1;
             out_nums[3] = (cut_size+1)*2 +2;
-            for(i=0; i!=cut_num; i++)
-                for(j=0; j!=(cut_nums+1); j++){
-
+            for(i=0; i!=cut_size; i++)
+                for(j=0; j!=(cut_size+1); j++){
+                    elems[i*(cut_size+1)+j] = j + i*cut_num;
+                    elems[(cut_size+i)*(cut_size+1)+j] = cut_num-1-i+j*cut_num;
+                    elems[(cut_size*2+i)*(cut_size+1)+j] = cut_num*(cut_num-i)-j-1;
+                    elems[(cut_size*3+i)*(cut_size+1)+j] = cut_num*(cut_num-j-1)+ i;
                 }
+            elems[cut_size*(cut_size+1)*4]=cut_num*(cut_num-cut_size)+ cut_size;
+            elems[cut_size*(cut_size+1)*4+1]=cut_num*(cut_num-cut_size-1)+ cut_size;
+            for(i=0; i!=3;i++)
+                elem_nums[i]=cut_size*(cut_size+1);
+            elem_nums[3]=cut_size*(cut_size+1)+2;
         } 
     }
 
