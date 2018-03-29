@@ -241,26 +241,56 @@ void set_in_global(int *in_global_i, int* in_nums){
     }
 }
 
-void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* in_nums, int* bound_nums, int* out_nums,
-        int* elems, int*elem_nums){
-    int i,j;
+void set_bound_global(int *bound_global_i, int* bound_nums){
+ int i,j;
     int cut_size;
- 
-    set_in_global(in_global_i, in_nums);
-    set_bound_global(bound_global_i, bound_nums);
     if(cut_num%2==1){
         cut_size = (cut_num+1)/2;
         for(i=0; i!=cut_size; i++){
-            bound_global_i[i] = (cut_size-1)*(cut_num+1)+i;
-            bound_global_i[i+(cut_size*2-1)] = (cut_size-1)*(cut_num+1)+i+cut_size;
-            bound_global_i[i+(cut_size*2-1)*2] = (cut_size)*(cut_num+1)+i;
-            bound_global_i[i+(cut_size*2-1)*3] = (cut_size)*(cut_num+1)+i+cut_size;
-            if(i!=cut_size-1){
-                bound_global_i[i+cut_size] = cut_size-1+(cut_num+1)*i;
-                bound_global_i[i+cut_size+(cut_size*2-1)*2] = cut_size + (cut_num+1)*i;
-                bound_global_i[i+cut_size+(cut_size*2-1)*3] = cut_size + (cut_num+1)*(i+cut_num);
-                bound_global_i[i+cut_size+(cut_size*2-1)*4] = cut_size -1 + (cut_num+1)*(i+cut_num);
+            for(j=0; j!=cut_size; j++){
+                bound_global_i[i] = (cut_size-1)*(cut_num+1)+i;
+                bound_global_i[i+(cut_size*2-1)] = (cut_size-1)*(cut_num+1)+i+cut_size;
+                bound_global_i[i+(cut_size*2-1)*2] = (cut_size)*(cut_num+1)+i;
+                bound_global_i[i+(cut_size*2-1)*3] = (cut_size)*(cut_num+1)+i+cut_size;
+                if(i!=cut_size-1){
+                    bound_global_i[i+cut_size] = cut_size-1+(cut_num+1)*i;
+                    bound_global_i[i+cut_size+(cut_size*2-1)*2] = cut_size + (cut_num+1)*i;
+                    bound_global_i[i+cut_size+(cut_size*2-1)*3] = cut_size + (cut_num+1)*(i+cut_num);
+                    bound_global_i[i+cut_size+(cut_size*2-1)*4] = cut_size -1 + (cut_num+1)*(i+cut_num);
+                }
+            }}
+        for(i=0; i<=4; i++)
+            bound_nums[i]=cut_size*2-1;
+    }else{
+        cut_size = cut_num/2;//value would be small end of rectangle
+        for(i=0; i!=cut_size; i++){//short
+            for(j=0; j!=cut_size+1; j++){//long
+                if(i==0){
+                    bound_global_i[j] = (cut_num+1)*(cut_size-1)+j;
+                    bound_global_i[j+cut_size*2] = (cut_num+1)*j + cut_size+1;
+                    bound_global_i[j+cut_size*2*2] = (cut_num+1)*(cut_size+1) + cut_size+j;
+                    bound_global_i[j+cut_size*2*3] = (cut_num+1)*cut_size + j;
+                }
             }
+            bound_global_i[cut_size+i] = cut_size+i*(cut_num+1);
+            bound_global_i[i+cut_size*3] = (cut_num+1)*cut_size + cut_size+1+i;
+            bound_global_i[i+cut_size*5] = (cut_num+1)*(cut_size+1+i) + cut_size;
+            bound_global_i[i+cut_size*7] = (cut_num+1)*cut_size + i;
+        }
+        bound_global_i[cut_size*8] = cut_size*(cut_num+1+1);
+        for(i=0; i<=3; i++)
+            bound_nums[i] = cut_size*2;
+        bound_nums[3] = cut_size*2+1;
+    }
+}
+
+set_out_global(int *out_global_i, int* out_nums){
+ int i,j;
+    int cut_size;
+   if(cut_num%2==1){
+        cut_size = (cut_num+1)/2;
+        for(i=0; i!=cut_size; i++){
+            for(j=0; j!=cut_size; j++){
             out_global_i[i] = cut_size*(cut_num+1) + i;
             out_global_i[i+cut_size] = cut_size + (cut_num+1)*i;
             out_global_i[i+cut_size*2+1] = cut_size*(cut_num+1) + cut_size + i;
@@ -270,14 +300,42 @@ void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* 
             out_global_i[i+(cut_size*2+1)*3] = (cut_size-1)*(cut_num+1)+i+cut_size;
             out_global_i[i+(cut_size*2+1)*4] = cut_size + (cut_num+1)*(i+cut_size-1);
             out_global_i[cut_size*2]= cut_size + cut_size*(cut_num+1);
+            }
         }
         out_global_i[(cut_size*2+1)*2-1] = cut_size-1 + cut_size*(cut_num+1);
         out_global_i[(cut_size*2+1)*3-1] = cut_size-1+(cut_size-1)*(cut_num+1);
         out_global_i[(cut_size*2+1)*4-1] = cut_size + (cut_size-1)*(cut_num+1);
-        for(i=0; i!=4; i++){
-            bound_nums[i]=cut_size*2-1;
+        for(i=0; i!=4; i++)
             out_nums[i]= cut_size*2+1;
+   }else{
+        cut_size = cut_num/2;//value would be small end of rectangle
+        for(i=0; i!=cut_size; i++){//short
+            for(j=0; j!=cut_size+1; j++){//long
+                if(i==0){
+                    out_global_i[i] = (cut_size)*(cut_num+1)+i;
+                    out_global_i[i+(cut_size*2+2)] = cut_size + i+(cut_num+1);
+                    out_global_i[i+(cut_size*2+2)*2] = (cut_size)*(cut_num+1) + (cut_num-i);
+                    out_global_i[i+(cut_size*2+2)*3] = (cut_size-1)*(cut_num+1) + i;
+                }
+            }
+            out_global_i[i+cut_size+2] = cut_size+1 + (cut_num+1)*i;
+            out_global_i[(cut_size*2+2)*2-1-i] = (cut_num+1)*cut_size - 1 -i;
+            out_global_i[(cut_size*2+2)*3-1-i] = cut_size-1 + (cut_num+1)*(cut_num-i);
+            out_global_i[(cut_size*2+2)*4-1-i] = cut_size + (cut_num+1)*(cut_num-i);
         }
+        for(i=0; i!=3; i++)
+            out_global_i[(cut_size*2+2)*4+i] = (cut_num+1)*(cut_num-i) + cut_size;
+        for(i=0;i!=3;i++)
+            out_nums[i] = (cut_size+1)*2;
+        out_nums[3] = (cut_size+1)*2 +2;
+   }
+}
+
+void set_mesh_elems(int* elems, int*elem_nums){
+    int i,j;
+    int cut_size;
+    if(cut_num%2==1){
+        cut_size = (cut_num+1)/2;
         for(i=0; i!=(cut_size+1);i++)
             for(j=0; j!=(cut_size+1); j++){
                 elems[i*cut_size+j] = i*cut_num+j;
@@ -290,40 +348,6 @@ void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* 
     }
     else{
         cut_size = cut_num/2;//value would be small end of rectangle
-        for(i=0; i!=cut_size; i++){//short
-            for(j=0; j!=cut_size+1; j++){//long
-                if(i==0){
-                    bound_global_i[j] = (cut_num+1)*(cut_size-1)+j;
-                    bound_global_i[j+cut_size*2] = (cut_num+1)*j + cut_size+1;
-                    bound_global_i[j+cut_size*2*2] = (cut_num+1)*(cut_size+1) + cut_size+j;
-                    bound_global_i[j+cut_size*2*3] = (cut_num+1)*cut_size + j;
-
-                    out_global_i[i] = (cut_size)*(cut_num+1)+i;
-                    out_global_i[i+(cut_size*2+2)] = cut_size + i+(cut_num+1);
-                    out_global_i[i+(cut_size*2+2)*2] = (cut_size)*(cut_num+1) + (cut_num-i);
-                    out_global_i[i+(cut_size*2+2)*3] = (cut_size-1)*(cut_num+1) + i;
-                }
-            }
-            bound_global_i[cut_size+i] = cut_size+i*(cut_num+1);
-            bound_global_i[i+cut_size*3] = (cut_num+1)*cut_size + cut_size+1+i;
-            bound_global_i[i+cut_size*5] = (cut_num+1)*(cut_size+1+i) + cut_size;
-            bound_global_i[i+cut_size*7] = (cut_num+1)*cut_size + i;
-
-            out_global_i[i+cut_size+2] = cut_size+1 + (cut_num+1)*i;
-            out_global_i[(cut_size*2+2)*2-1-i] = (cut_num+1)*cut_size - 1 -i;
-            out_global_i[(cut_size*2+2)*3-1-i] = cut_size-1 + (cut_num+1)*(cut_num-i);
-            out_global_i[(cut_size*2+2)*4-1-i] = cut_size + (cut_num+1)*(cut_num-i);
-        }
-        bound_global_i[cut_size*8] = cut_size*(cut_num+1+1);
-        for(i=0; i!=3; i++){
-            out_global_i[(cut_size*2+2)*4+i] = (cut_num+1)*(cut_num-i) + cut_size;
-        }
-        for(i=0;i!=3;i++){
-            bound_nums[i] = cut_size*2;
-            out_nums[i] = (cut_size+1)*2;
-        }
-        bound_nums[3] = cut_size*2+1;
-        out_nums[3] = (cut_size+1)*2 +2;
         for(i=0; i!=cut_size; i++)
             for(j=0; j!=(cut_size+1); j++){
                 elems[i*(cut_size+1)+j] = j + i*cut_num;
@@ -337,6 +361,14 @@ void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* 
             elem_nums[i]=cut_size*(cut_size+1);
         elem_nums[3]=cut_size*(cut_size+1)+2;
     } 
+}
+
+void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* in_nums, int* bound_nums, int* out_nums,
+        int* elems, int*elem_nums){
+    set_mesh_in(in_global_i, in_nums);
+    set_mesh_bound(bound_global_i, bound_nums);
+    set_mesh_out(out_global_i, out_nums);
+    set_mesh_elems(elems, elem_nums);
 }
 
 void set_bound(int* fix_bound_i, int* fix_bound_num){
