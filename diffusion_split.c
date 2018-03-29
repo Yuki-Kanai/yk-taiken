@@ -289,64 +289,111 @@ void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* 
         for(i=0; i!=cut_size; i++){//short
             for(j=0; j!=cut_size+1; j++){//long
                 in_global_i[i*(cut_size+1)+j] = i*(cut_num+1)+j;
-                    in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size] = i+cut_size+1 + (cut_num+1)*j;
-                    in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size*2] = (i+cut_size+1)*(cut_num+1) + cut_size+j;
-                    in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size*3] = i + (j+cut_size)*(cut_num+1);
+                in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size] = i+cut_size+1 + (cut_num+1)*j;
+                in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size*2] = (i+cut_size+1)*(cut_num+1) + cut_size+j;
+                in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size*3] = i + (j+cut_size)*(cut_num+1);
 
-                    if(i==0){
-                        bound_global_i[j] = (cut_num+1)*(cut_size-1)+j;
-                        bound_global_i[j+cut_size*2] = (cut_num+1)*j + cut_size+1;
-                        bound_global_i[j+cut_size*2*2] = (cut_num+1)*(cut_size+1) + cut_size+j;
-                        bound_global_i[j+cut_size*2*3] = (cut_num+1)*cut_size + j;
+                if(i==0){
+                    bound_global_i[j] = (cut_num+1)*(cut_size-1)+j;
+                    bound_global_i[j+cut_size*2] = (cut_num+1)*j + cut_size+1;
+                    bound_global_i[j+cut_size*2*2] = (cut_num+1)*(cut_size+1) + cut_size+j;
+                    bound_global_i[j+cut_size*2*3] = (cut_num+1)*cut_size + j;
 
-                        out_global_i[i] = (cut_size)*(cut_num+1)+i;
-                        out_global_i[i+(cut_size*2+2)] = cut_size + i+(cut_num+1);
-                        out_global_i[i+(cut_size*2+2)*2] = (cut_size)*(cut_num+1) + (cut_num-i);
-                        out_global_i[i+(cut_size*2+2)*3] = (cut_size-1)*(cut_num+1) + i;
-                    }
+                    out_global_i[i] = (cut_size)*(cut_num+1)+i;
+                    out_global_i[i+(cut_size*2+2)] = cut_size + i+(cut_num+1);
+                    out_global_i[i+(cut_size*2+2)*2] = (cut_size)*(cut_num+1) + (cut_num-i);
+                    out_global_i[i+(cut_size*2+2)*3] = (cut_size-1)*(cut_num+1) + i;
                 }
-                bound_global_i[cut_size+i] = cut_size+i*(cut_num+1);
-                bound_global_i[i+cut_size*3] = (cut_num+1)*cut_size + cut_size+1+i;
-                bound_global_i[i+cut_size*5] = (cut_num+1)*(cut_size+1+i) + cut_size;
-                bound_global_i[i+cut_size*7] = (cut_num+1)*cut_size + i;
+            }
+            bound_global_i[cut_size+i] = cut_size+i*(cut_num+1);
+            bound_global_i[i+cut_size*3] = (cut_num+1)*cut_size + cut_size+1+i;
+            bound_global_i[i+cut_size*5] = (cut_num+1)*(cut_size+1+i) + cut_size;
+            bound_global_i[i+cut_size*7] = (cut_num+1)*cut_size + i;
 
-                out_global_i[i+cut_size+2] = cut_size+1 + (cut_num+1)*i;
-                out_global_i[(cut_size*2+2)*2-1-i] = (cut_num+1)*cut_size - 1 -i;
-                out_global_i[(cut_size*2+2)*3-1-i] = cut_size-1 + (cut_num+1)*(cut_num-i);
-                out_global_i[(cut_size*2+2)*4-1-i] = cut_size + (cut_num+1)*(cut_num-i);
+            out_global_i[i+cut_size+2] = cut_size+1 + (cut_num+1)*i;
+            out_global_i[(cut_size*2+2)*2-1-i] = (cut_num+1)*cut_size - 1 -i;
+            out_global_i[(cut_size*2+2)*3-1-i] = cut_size-1 + (cut_num+1)*(cut_num-i);
+            out_global_i[(cut_size*2+2)*4-1-i] = cut_size + (cut_num+1)*(cut_num-i);
+        }
+        in_global_i[(cut_size+1)*cut_size*4] = cut_size + cut_size*(cut_num+1);
+        bound_global_i[cut_size*8] = cut_size*(cut_num+1+1);
+        for(i=0; i!=3; i++){
+            out_global_i[(cut_size*2+2)*4+i] = (cut_num+1)*(cut_num-i) + cut_size;
+        }
+        for(i=0;i!=3;i++){
+            in_nums[i] = cut_size*(cut_size+1);
+            bound_nums[i] = cut_size*2;
+            out_nums[i] = (cut_size+1)*2;
+        }
+        in_nums[3] = cut_size*(cut_size+1)+1;
+        bound_nums[3] = cut_size*2+1;
+        out_nums[3] = (cut_size+1)*2 +2;
+        for(i=0; i!=cut_size; i++)
+            for(j=0; j!=(cut_size+1); j++){
+                elems[i*(cut_size+1)+j] = j + i*cut_num;
+                elems[(cut_size+i)*(cut_size+1)+j] = cut_num-1-i+j*cut_num;
+                elems[(cut_size*2+i)*(cut_size+1)+j] = cut_num*(cut_num-i)-j-1;
+                elems[(cut_size*3+i)*(cut_size+1)+j] = cut_num*(cut_num-j-1)+ i;
             }
-            in_global_i[(cut_size+1)*cut_size*4] = cut_size + cut_size*(cut_num+1);
-            bound_global_i[cut_size*8] = cut_size*(cut_num+1+1);
-            for(i=0; i!=3; i++){
-                out_global_i[(cut_size*2+2)*4+i] = (cut_num+1)*(cut_num-i) + cut_size;
+        elems[cut_size*(cut_size+1)*4]=cut_num*(cut_num-cut_size)+ cut_size;
+        elems[cut_size*(cut_size+1)*4+1]=cut_num*(cut_num-cut_size-1)+ cut_size;
+        for(i=0; i!=3;i++)
+            elem_nums[i]=cut_size*(cut_size+1);
+        elem_nums[3]=cut_size*(cut_size+1)+2;
+    } 
+}
+
+
+
+void set_KC(double* K, double* C, int* subfield_i, int sub_field_tot, int* node_i, int node_tot,
+        int* fix_bound_i, int fix_bound_num){
+    double temp_localNN[16], temp_localdNN[16];
+
+    reset_matrix_double(NN, node_tot*node_tot);
+    reset_matrix_double(dNN, node_tot*node_tot);
+
+    k=0;
+    printf("Calculate element stiffness equation for each elements\n");
+    for(i=0; i!=sub_field_tot; i++){
+        get_localNN(temp_localNN, i, 1);//16 products
+        get_localNN(temp_localdNN, i, 0);
+        for(j=0; j!=4; j++){
+            for(k=0; k!=4; k++){
+                NN[get_global_index(i,j)* size+ get_global_index(i,k)] += temp_localNN[j*4+k];
+                dNN[get_global_index(i,j)* size+ get_global_index(i,k)] += temp_localdNN[j*4+k]*D; //warning: multiply D
             }
-            for(i=0;i!=3;i++){
-                in_nums[i] = cut_size*(cut_size+1);
-                bound_nums[i] = cut_size*2;
-                out_nums[i] = (cut_size+1)*2;
-            }
-            in_nums[3] = cut_size*(cut_size+1)+1;
-            bound_nums[3] = cut_size*2+1;
-            out_nums[3] = (cut_size+1)*2 +2;
-            for(i=0; i!=cut_size; i++)
-                for(j=0; j!=(cut_size+1); j++){
-                    elems[i*(cut_size+1)+j] = j + i*cut_num;
-                    elems[(cut_size+i)*(cut_size+1)+j] = cut_num-1-i+j*cut_num;
-                    elems[(cut_size*2+i)*(cut_size+1)+j] = cut_num*(cut_num-i)-j-1;
-                    elems[(cut_size*3+i)*(cut_size+1)+j] = cut_num*(cut_num-j-1)+ i;
-                }
-            elems[cut_size*(cut_size+1)*4]=cut_num*(cut_num-cut_size)+ cut_size;
-            elems[cut_size*(cut_size+1)*4+1]=cut_num*(cut_num-cut_size-1)+ cut_size;
-            for(i=0; i!=3;i++)
-                elem_nums[i]=cut_size*(cut_size+1);
-            elem_nums[3]=cut_size*(cut_size+1)+2;
-        } 
+        }
+        if((i*10)/(sub_field_tot>k)){
+            k++;
+            printf("\rCalculating ES equation：%d0%%",k);
+            fflush(stdout);
+        }
     }
+    
+    int index;
+    for(i=0; i!= fix_bound_num; i++){
+        for(j=0; j!=size; j++){
+            index = get_local_index(fix_bound_i[i], node_i, node_tot);
+            if(index >= 0)
+                NN[index] = 0;
+        }
+    }
+    printf("\nFinished calculating ES Equation\n");
+}
+
+void print2stdout(double* phi, int size, int i){
+    printf("\n\nfinished calculating until i=%d\n\n",i);
+    printf("phi[i]=");
+    for(j=0; j!=size; j++)
+        printf("%.2e ",phi[size]);
+    printf("\n\n");
 
 }
+
 int main(int argc, char* argv[]){
     FILE* out;
-    int i,j,k;
+    B
+        int i,j,k;
     double h = 1e-6;//time interval
     int itmax = 1e6;
     double D = 1;
@@ -361,126 +408,89 @@ int main(int argc, char* argv[]){
     }
     in_global_i=(int*)malloc(sizeof(int)*in_num); bound_global_i=(int*)malloc(sizeof(int)*bound_num);
     out_global_i=(int*)malloc(sizeof(int)*out_num); elems=(int*)malloc(sizeof(int)*in_num);
-    divide_mesh(in_global_i, bound_global_i, out_global_i, in_nums, bound_nums, out_nums, elems, elem_nums){
-        MPI_RUN();
-        int size = in_num+out_num;
-        NN = (double*)malloc(sizeof(double)*size*size);
-        dNN = (double*)malloc(sizeof(double)*size*size);
-        C = (double*)malloc(sizeof(double)*size*size);
-        L = (double*)malloc(sizeof(double)*size*size);
-        P = (double*)malloc(sizeof(double)*size*size);
-        S = (double*)malloc(sizeof(double)*size*size);
-        temps = (double*)malloc(sizeof(double)*size*size);
-        double temp_localNN[16], temp_localdNN[16];
+    divide_mesh(in_global_i, bound_global_i, out_global_i, in_nums, bound_nums, out_nums, elems, elem_nums);
+
+    int rank, proc;
+
+    MPI_INIT(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
 
 
-        reset_matrix_double(NN,size*size);
-        reset_matrix_double(dNN, size*size);
+    int size = in_num+out_num;
 
-        k=0;
-        printf("Calculate element stiffness equation for each elements\n");
-        for(i=0; i!=cut_num*cut_num; i++){
-            get_localNN(temp_localNN, i, 1);//16 products
-            get_localNN(temp_localdNN, i, 0);
-            for(j=0; j!=4; j++){
-                for(k=0; k!=4; k++){
-                    NN[get_global_index(i,j)* size+ get_global_index(i,k)] += temp_localNN[j*4+k];
-                    dNN[get_global_index(i,j)* size+ get_global_index(i,k)] += temp_localdNN[j*4+k]*D; //warning: multiply D
-                }
-            }
-            if((i*10)/(cut_num*cut_num)>k){
-                k++;
-                printf("\rCalculating ES equation：%d0%%",k);
-                fflush(stdout);
-            }
-        }
-        printf("\nFinished calculating ES Equation\n");
+    NN = (double*)malloc(sizeof(double)*size*size);
+    dNN = (double*)malloc(sizeof(double)*size*size);
+    C = (double*)malloc(sizeof(double)*size*size);
+    L = (double*)malloc(sizeof(double)*size*size);
+    P = (double*)malloc(sizeof(double)*size*size);
+    S = (double*)malloc(sizeof(double)*size*size);
+    temps = (double*)malloc(sizeof(double)*size*size);
+    double temp_localNN[16], temp_localdNN[16];
 
-        //Boundary setting
-        double* fix_bound;
-        int fix_bound_num = (cut_num+1)*2;
-        fix_bound = (double*)malloc(sizeof(double)*fix_bound_num);
-        int* fix_bound_i;
-        fix_bound_i=(int*)malloc(sizeof(int)*fix_bound_num);
 
-        for(i=0;i!=cut_num+1;i++){
-            fix_bound[i] = 100;
-            fix_bound_i[i] = i*(cut_num+1);
-        }
-        for(i=0; i!= (cut_num+1);i++){
-            fix_bound[i+cut_num+1] = 0;
-            fix_bound_i[i+cut_num+1] = (i+1)*(cut_num+1) -1;
-        }
-        for(i=0; i!= fix_bound_num; i++){
-            for(j=0; j!=size; j++){
-                NN[fix_bound_i[i]*size+j] = 0;
-                NN[fix_bound_i[i]+ j*size] = 0;
-            }
-        }
-        for(i=0; i!= fix_bound_num; i++)
-            NN[fix_bound_i[i]*(size+1)] = 1;
+    //Boundary setting
+    double* fix_bound;
+    int fix_bound_num = (cut_num+1)*2;
+    fix_bound = (double*)malloc(sizeof(double)*fix_bound_num);
+    int* fix_bound_i;
+    fix_bound_i=(int*)malloc(sizeof(int)*fix_bound_num);
 
-        LU_factorize(NN, L, P, S, size);
-
-        double* b, *x, *phi, *temp;
-        b = (double*)malloc(sizeof(double)*size);
-        x = (double*)malloc(sizeof(double)*size);
-        phi = (double*)malloc(sizeof(double)*size);
-        temp = (double*)malloc(sizeof(double)*size);
-        out = fopen("result.data","w");
-
-        reset_matrix_double(phi, size);//set to 0degrees for initial condition
-        print_status(out, phi, size, 0, h);
-
-        for(i=0; i!= itmax; i++){
-            mult_matrix(dNN, phi, b, size, size, 1);
-            for(j=0; j!=size; j++)
-                b[j] = -b[j];
-            //to set dphi/dt to 0 for Dirichlet boundary
-            for(j=0; j!=fix_bound_num; j++)
-                b[fix_bound_i[j]] = 0;
-
-            if(i%100000==0){
-                printf("b[i]=");
-                for(j=0; j!=(cut_num+1); j++)
-                    for(k=0; k!= (cut_num+1); k++)
-                        printf("%.2e ", b[j*(cut_num+1)+k]);
-                printf("\n");
-            }
-
-            mult_matrix(S, b, temp, size, size, 1);
-            mult_matrix(P, temp, b, size, size, 1);
-
-            forward_elimination(L, temp, b, size);
-            backward_substitution(NN, x, temp, size);
-
-            for(j=0; j!=size; j++)
-                phi[j] += x[j]*h;
-            //For this case, the boundary is set by dphi/dt, so no change is required for vector b
-            for(j=0; j!=fix_bound_num; j++){
-                phi[fix_bound_i[j]] = fix_bound[j];
-            }
-            print_status(out, phi, size, i, h);
-            if(i%100000==0){
-                printf("\n\nfinished calculating until i=%d\n\n",i);
-                printf("x[i]=\n");
-                for(j=0; j!=(cut_num+1); j++)
-                    for(k=0; k!= (cut_num+1); k++)
-                        printf("%.2e ", x[j*(cut_num+1)+k]);
-                printf("\n\n");
-                printf("phi[i]=");
-                for(j=0; j!=(cut_num+1); j++)
-                    for(k=0; k!= (cut_num+1); k++)
-                        printf("%.2e ", phi[j*(cut_num+1)+k]);
-                printf("\n\n");
-            }
-        }
-        printf("\n\n!!!Finished!!!\n\n");
-        free(in_global_i); free(bound_global_i); free(out_global_i); free(elems);
-        free(NN); free(dNN); free(C); free(L); free(P); free(S); free(temps);
-        free(b); free(x); free(phi); free(temp);
-        free(fix_bound); free(fix_bound_i);
-        fclose(out);
-        return 0;
+    for(i=0;i!=cut_num+1;i++){
+        fix_bound[i] = 100;
+        fix_bound_i[i] = i*(cut_num+1);
     }
+    for(i=0; i!= (cut_num+1);i++){
+        fix_bound[i+cut_num+1] = 0;
+        fix_bound_i[i+cut_num+1] = (i+1)*(cut_num+1) -1;
+    }
+    void set_KC(K, C, subfield_i, sub_field_tot, node_i, node_tot, fix_bound_i, fix_bound_num);
+    for(i=0; i!= fix_bound_num; i++)
+        NN[fix_bound_i[i]*(size+1)] = 1;
+
+    LU_factorize(NN, L, P, S, size);
+
+    double* b, *x, *phi, *temp;
+    b = (double*)malloc(sizeof(double)*size);
+    x = (double*)malloc(sizeof(double)*size);
+    phi = (double*)malloc(sizeof(double)*size);
+    temp = (double*)malloc(sizeof(double)*size);
+    out = fopen("result.data","w");
+
+    reset_matrix_double(phi, size);//set to 0degrees for initial condition
+    print_status(out, phi, size, 0, h);
+
+    for(i=0; i!= itmax; i++){
+        mult_matrix(dNN, phi, b, size, size, 1);
+        for(j=0; j!=size; j++)
+            b[j] = -b[j];
+        //to set dphi/dt to 0 for Dirichlet boundary
+        for(j=0; j!=fix_bound_num; j++)
+            b[fix_bound_i[j]] = 0;
+
+        mult_matrix(S, b, temp, size, size, 1);
+        mult_matrix(P, temp, b, size, size, 1);
+
+        forward_elimination(L, temp, b, size);
+        backward_substitution(NN, x, temp, size);
+
+        for(j=0; j!=size; j++)
+            phi[j] += x[j]*h;
+        //For this case, the boundary is set by dphi/dt, so no change is required for vector b
+        for(j=0; j!=fix_bound_num; j++){
+            phi[fix_bound_i[j]] = fix_bound[j];
+        }
+        print_status(out, phi, size, i, h);
+        if(i%(itmax/10)==0) 
+            print2stdout(phi, size);
+
+    }
+    MPI_Finalize();
+    printf("\n\n!!!Finished!!!\n\n");
+    free(in_global_i); free(bound_global_i); free(out_global_i); free(elems);
+    free(NN); free(dNN); free(C); free(L); free(P); free(S); free(temps);
+    free(b); free(x); free(phi); free(temp);
+    free(fix_bound); free(fix_bound_i);
+    fclose(out);
+    return 0;
+}
 
