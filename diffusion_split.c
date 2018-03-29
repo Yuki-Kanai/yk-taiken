@@ -232,6 +232,8 @@ int* get_in_global_i(){
     return in_global_i;
 }
 
+
+
 void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* in_nums, int* bound_nums, int* out_nums,
         int* elems, int*elem_nums){
     int i,j;
@@ -354,6 +356,18 @@ void set_bound(int* fix_bound_i, int* fix_bound_num){
         fix_bound_i[i+cut_num+1] = (i+1)*(cut_num+1) -1;
     }
 }
+
+int get_local_index(int global_i, int* local_nodes, int local_node_tot){
+    int local_i = -1;
+    int i;
+    for(i=0; i<= local_node_tot; i++){
+        if(local_nodes[i]=global_i){
+            local_i=i;
+            break;
+        }}
+    return local_i
+}
+
 void set_KC(double* K, double* C, int* subfield_i, int sub_field_tot, int* node_i, int node_tot,
         int* fix_bound_i, int fix_bound_num){
     double temp_localNN[16], temp_localdNN[16];
