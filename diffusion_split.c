@@ -343,8 +343,17 @@ void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* 
     } 
 }
 
-
-
+void set_bound(int* fix_bound_i, int* fix_bound_num){
+    *fix_bound_num = (cut_num+1)*2;
+    for(i=0;i!=cut_num+1;i++){
+        fix_bound[i] = 100;
+        fix_bound_i[i] = i*(cut_num+1);
+    }
+    for(i=0; i!= (cut_num+1);i++){
+        fix_bound[i+cut_num+1] = 0;
+        fix_bound_i[i+cut_num+1] = (i+1)*(cut_num+1) -1;
+    }
+}
 void set_KC(double* K, double* C, int* subfield_i, int sub_field_tot, int* node_i, int node_tot,
         int* fix_bound_i, int fix_bound_num){
     double temp_localNN[16], temp_localdNN[16];
@@ -378,6 +387,11 @@ void set_KC(double* K, double* C, int* subfield_i, int sub_field_tot, int* node_
                 NN[index] = 0;
         }
     }
+    for(i=0; i!= fix_bound_num; i++){
+        index = get_local_index(fix_bound_i[i], node_i, node_tot);
+        if(intdex >= 0)
+            NN[index] = 1;
+    }
     printf("\nFinished calculating ES Equation\n");
 }
 
@@ -392,8 +406,7 @@ void print2stdout(double* phi, int size, int i){
 
 int main(int argc, char* argv[]){
     FILE* out;
-    B
-        int i,j,k;
+    int i,j,k;
     double h = 1e-6;//time interval
     int itmax = 1e6;
     double D = 1;
@@ -410,14 +423,19 @@ int main(int argc, char* argv[]){
     out_global_i=(int*)malloc(sizeof(int)*out_num); elems=(int*)malloc(sizeof(int)*in_num);
     divide_mesh(in_global_i, bound_global_i, out_global_i, in_nums, bound_nums, out_nums, elems, elem_nums);
 
-    int rank, proc;
 
+    double* fix_bound;
+    int fix_bound_num; 
+    fix_bound = (double*)malloc(sizeof(double)*fix_bound_num);
+    int* fix_bound_i;
+    fix_bound_i=(int*)malloc(sizeof(int)*fix_bound_num);
+    set_bound(fix_bound, &fix_bound_num);
+    
+    int rank, proc;
     MPI_INIT(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
-
-
-    int size = in_num+out_num;
-
+    
+    int size = in_num[rank]+out_num[rank];
     NN = (double*)malloc(sizeof(double)*size*size);
     dNN = (double*)malloc(sizeof(double)*size*size);
     C = (double*)malloc(sizeof(double)*size*size);
@@ -427,26 +445,7 @@ int main(int argc, char* argv[]){
     temps = (double*)malloc(sizeof(double)*size*size);
     double temp_localNN[16], temp_localdNN[16];
 
-
-    //Boundary setting
-    double* fix_bound;
-    int fix_bound_num = (cut_num+1)*2;
-    fix_bound = (double*)malloc(sizeof(double)*fix_bound_num);
-    int* fix_bound_i;
-    fix_bound_i=(int*)malloc(sizeof(int)*fix_bound_num);
-
-    for(i=0;i!=cut_num+1;i++){
-        fix_bound[i] = 100;
-        fix_bound_i[i] = i*(cut_num+1);
-    }
-    for(i=0; i!= (cut_num+1);i++){
-        fix_bound[i+cut_num+1] = 0;
-        fix_bound_i[i+cut_num+1] = (i+1)*(cut_num+1) -1;
-    }
     void set_KC(K, C, subfield_i, sub_field_tot, node_i, node_tot, fix_bound_i, fix_bound_num);
-    for(i=0; i!= fix_bound_num; i++)
-        NN[fix_bound_i[i]*(size+1)] = 1;
-
     LU_factorize(NN, L, P, S, size);
 
     double* b, *x, *phi, *temp;
@@ -454,7 +453,9 @@ int main(int argc, char* argv[]){
     x = (double*)malloc(sizeof(double)*size);
     phi = (double*)malloc(sizeof(double)*size);
     temp = (double*)malloc(sizeof(double)*size);
+    if(
     out = fopen("result.data","w");
+
 
     reset_matrix_double(phi, size);//set to 0degrees for initial condition
     print_status(out, phi, size, 0, h);
@@ -482,7 +483,6 @@ int main(int argc, char* argv[]){
         print_status(out, phi, size, i, h);
         if(i%(itmax/10)==0) 
             print2stdout(phi, size);
-
     }
     MPI_Finalize();
     printf("\n\n!!!Finished!!!\n\n");
