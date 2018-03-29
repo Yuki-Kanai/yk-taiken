@@ -394,7 +394,7 @@ int get_local_index(int global_i, int* local_nodes, int local_node_tot){
     return local_i
 }
 
-void set_KC(double* K, double* C, int* subfield_i, int sub_field_tot, int* node_i, int node_tot,
+void set_KC(double* NN, double* dNN, int* subfield_i, int sub_field_tot, int* node_i, int node_tot,
         int* fix_bound_i, int fix_bound_num){
     double temp_localNN[16], temp_localdNN[16];
 
@@ -404,12 +404,12 @@ void set_KC(double* K, double* C, int* subfield_i, int sub_field_tot, int* node_
     k=0;
     printf("Calculate element stiffness equation for each elements\n");
     for(i=0; i!=sub_field_tot; i++){
-        get_localNN(temp_localNN, i, 1);//16 products
-        get_localNN(temp_localdNN, i, 0);
+        get_localNN(temp_localNN, subfield_i[i], 1);//16 products
+        get_localNN(temp_localdNN, subfield_i[i], 0);
         for(j=0; j!=4; j++){
             for(k=0; k!=4; k++){
-                NN[get_global_index(i,j)* size+ get_global_index(i,k)] += temp_localNN[j*4+k];
-                dNN[get_global_index(i,j)* size+ get_global_index(i,k)] += temp_localdNN[j*4+k]*D; //warning: multiply D
+                NN[get_global_index(subfield_i[i],j)* size+ get_global_index(subfield_i[i],k)] += temp_localNN[j*4+k];
+                dNN[get_global_index(subfield_i[i],j)* size+ get_global_index(subfield_i[i],k)] += temp_localdNN[j*4+k]*D; //warning: multiply D
             }
         }
         if((i*10)/(sub_field_tot>k)){
@@ -435,13 +435,43 @@ void set_KC(double* K, double* C, int* subfield_i, int sub_field_tot, int* node_
     printf("\nFinished calculating ES Equation\n");
 }
 
-void print2stdout(double* phi, int size, int i){
+void print2stdout(const double* phi, int size, int i){
     printf("\n\nfinished calculating until i=%d\n\n",i);
     printf("phi[i]=");
     for(j=0; j!=size; j++)
         printf("%.2e ",phi[size]);
     printf("\n\n");
 
+}
+
+void set_local_i(int* in_local_i, const int* in_global_i, const int* in_nums, int* bound_local_i, const int* bound_global_i, 
+        const int* bound_nums, int* out_local_i, const int* out_global_i, const int* out_nums, 
+        int* elem_local_i, const int* elems, const int* elem_nums, int rank){
+    int i;
+    int first;
+    first = 0;
+    for(i=1; i<=rank; i++)
+        first += in_nums[i-1];
+    for(i=0; i<in_nums[rank]; i++)
+        in_local_i[i] = in_global_i[i+first];
+
+    first=0;
+    for(i=1; i<=rank; i++)
+        first += bound_nums[i-1];
+    for(i=0; i<bound_nums[rank]; i++)
+        bound_local_i[i] = bound_global_i[first+i];
+    
+    first = 0;
+    for(i=0; i<=rank; i++)
+        first += out_nums[i-1];
+    for(i=0; i<out_nums[rank]; i++)
+        out_local_i[i] = out_global_i[first+i];
+    
+    first = 0;
+    for(i=0; i<=rank; i++)
+        first += elem_nums[i-1];
+    for(i=0; i< elem_nums[rank]; i++)
+        elem_local_i[i] = elems[first+i];
 }
 
 int main(int argc, char* argv[]){
@@ -461,31 +491,38 @@ int main(int argc, char* argv[]){
     }
     in_global_i=(int*)malloc(sizeof(int)*in_num); bound_global_i=(int*)malloc(sizeof(int)*bound_num);
     out_global_i=(int*)malloc(sizeof(int)*out_num); elems=(int*)malloc(sizeof(int)*in_num);
+
     divide_mesh(in_global_i, bound_global_i, out_global_i, in_nums, bound_nums, out_nums, elems, elem_nums);
 
-
     double* fix_bound;
-    int fix_bound_num; 
-    fix_bound = (double*)malloc(sizeof(double)*fix_bound_num);
-    int* fix_bound_i;
-    fix_bound_i=(int*)malloc(sizeof(int)*fix_bound_num);
-    set_bound(fix_bound, &fix_bound_num);
+    int fix_bound_num;  fix_bound = (double*)malloc(sizeof(double)*fix_bound_num);
+    int* fix_bound_i;   fix_bound_i=(int*)malloc(sizeof(int)*fix_bound_num);
     
-    int rank, proc;
+    set_bound(fix_bound, &fix_bound_num);
+   
+
+    int rank, process_num;
     MPI_INIT(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
+    MPI_Comm_size(MPI_COMM_WORLD, &process_num);
+    if(process_num!=4){
+        fprintf(stderr, "Error: Total number of threads must be 4 but now %d.\n", process_num);
+        return 9;
+    }
     
     int size = in_num[rank]+out_num[rank];
-    NN = (double*)malloc(sizeof(double)*size*size);
-    dNN = (double*)malloc(sizeof(double)*size*size);
-    C = (double*)malloc(sizeof(double)*size*size);
-    L = (double*)malloc(sizeof(double)*size*size);
-    P = (double*)malloc(sizeof(double)*size*size);
-    S = (double*)malloc(sizeof(double)*size*size);
+    NN = (double*)malloc(sizeof(double)*size*size); dNN = (double*)malloc(sizeof(double)*size*size);
+    C = (double*)malloc(sizeof(double)*size*size);  L = (double*)malloc(sizeof(double)*size*size);
+    P = (double*)malloc(sizeof(double)*size*size);  S = (double*)malloc(sizeof(double)*size*size);
     temps = (double*)malloc(sizeof(double)*size*size);
-    double temp_localNN[16], temp_localdNN[16];
+    
+    int* in_local_i, *bound_local_i, *out_local_i, *elem_local_i;
+    in_local_i=(int*)malloc(sizeof(int)*in_nums[rank]); bound_local_i=(int*)malloc(sizeof(int)*bound_nums[rank]);
+    out_local_i=(int*)malloc(sizeof(int)*out_nums[rank]); elem_local_i=(int*)malloc(sizeof(int)*elem_nums[rank];
+    set_local_i(in_local_i, in_global_i, in_nums, bound_local_i, bound_global_i, bound_nums
+            , out_local_i, out_global_i, out_nums, elem_local_i, elems, elem_nums, rank);
 
-    void set_KC(K, C, subfield_i, sub_field_tot, node_i, node_tot, fix_bound_i, fix_bound_num);
+    void set_KC(NN, dNN, elems, elem_nums[rank], node_i, node_tot, fix_bound_i, fix_bound_num);
     LU_factorize(NN, L, P, S, size);
 
     double* b, *x, *phi, *temp;
@@ -530,6 +567,7 @@ int main(int argc, char* argv[]){
     free(NN); free(dNN); free(C); free(L); free(P); free(S); free(temps);
     free(b); free(x); free(phi); free(temp);
     free(fix_bound); free(fix_bound_i);
+    free(in_local_i); free(bound_local_i); free(out_local_i); free(elem_local_i);
     fclose(out);
     return 0;
 }
