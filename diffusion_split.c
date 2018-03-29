@@ -208,10 +208,9 @@ void print_status(FILE *fp, const double* phi, int size, int i, double h){
 
 //insert array must have four times the maximum number of nodes of each type
 //in:node inside the submesh, bound, node: inside but shares lattices with other submeshes, out: outside but shares lattices with this submesh 
-int* get_in_global_i(){
-    int in_global_i[(cut_num+1)*(cut_num+1)];
+void set_in_global(int *in_global_i, int* in_nums){
     int i,j;
-    int cut_size,;
+    int cut_size;
     if(cut_num%2==1){
         cut_size = (cut_num+1)/2;
         for(i=0; i!=cut_size; i++){
@@ -220,34 +219,38 @@ int* get_in_global_i(){
                 in_global_i[(cut_size*cut_size)+i*cut_size+j] = i*(cut_num+1)+j+cut_size;
                 in_global_i[(cut_size*cut_size)*2+i*cut_size+j] = (i+cut_size)*(cut_num+1)+j;
                 in_global_i[3*(cut_size*cut_size)+i*cut_size+j] = (i+cut_size)*cut_num+j+cut_size;
-            }}}    
+            }}
+        for(i=0; i!=4; i++)
+            in_nums[i]=cut_size*cut_size;
+    }
     else{
-        cut_size = cut_num/2;//value would be small end of rectangle
-        for(i=0; i!=cut_size; i++){//short
-            for(j=0; j!=cut_size+1; j++){//long
-                in_global_i[i*(cut_size+1)+j] = i*(cut_num+1)+j;
-                in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size] = i+cut_size+1 + (cut_num+1)*j;
-                in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size*2] = (i+cut_size+1)*(cut_num+1) + cut_size+j;
-            }}}
-    return in_global_i;
+            cut_size = cut_num/2;//value would be small end of rectangle
+            for(i=0; i!=cut_size; i++){//short
+                for(j=0; j!=cut_size+1; j++){//long
+                    in_global_i[i*(cut_size+1)+j] = i*(cut_num+1)+j;
+                    in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size] = i+cut_size+1 + (cut_num+1)*j;
+                    in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size*2] = (i+cut_size+1)*(cut_num+1) + cut_size+j;
+                    in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size*3] = i + (j+cut_size)*(cut_num+1);
+                }}
+        in_global_i[(cut_size+1)*cut_size*4] = cut_size + cut_size*(cut_num+1);
+
+        for(i=0;i!=3;i++){
+            in_nums[i] = cut_size*(cut_size+1);
+        }
+        in_nums[3] = cut_size*(cut_size+1)+1;
+    }
 }
-
-
 
 void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* in_nums, int* bound_nums, int* out_nums,
         int* elems, int*elem_nums){
     int i,j;
-    int cut_size,;
+    int cut_size;
+ 
+    set_in_global(in_global_i, in_nums);
+    set_bound_global(bound_global_i, bound_nums);
     if(cut_num%2==1){
         cut_size = (cut_num+1)/2;
         for(i=0; i!=cut_size; i++){
-            for(j=0; j!=cut_size; j++){
-                in_global_i[i*cut_size+j] = i*(cut_num+1)+j;
-                in_global_i[(cut_size*cut_size)+i*cut_size+j] = i*(cut_num+1)+j+cut_size;
-                in_global_i[(cut_size*cut_size)*2+i*cut_size+j] = (i+cut_size)*(cut_num+1)+j;
-                in_global_i[3*(cut_size*cut_size)+i*cut_size+j] = (i+cut_size)*cut_num+j+cut_size;
-
-            }
             bound_global_i[i] = (cut_size-1)*(cut_num+1)+i;
             bound_global_i[i+(cut_size*2-1)] = (cut_size-1)*(cut_num+1)+i+cut_size;
             bound_global_i[i+(cut_size*2-1)*2] = (cut_size)*(cut_num+1)+i;
@@ -272,7 +275,6 @@ void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* 
         out_global_i[(cut_size*2+1)*3-1] = cut_size-1+(cut_size-1)*(cut_num+1);
         out_global_i[(cut_size*2+1)*4-1] = cut_size + (cut_size-1)*(cut_num+1);
         for(i=0; i!=4; i++){
-            in_nums[i]=cut_size*cut_size;
             bound_nums[i]=cut_size*2-1;
             out_nums[i]= cut_size*2+1;
         }
@@ -290,11 +292,6 @@ void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* 
         cut_size = cut_num/2;//value would be small end of rectangle
         for(i=0; i!=cut_size; i++){//short
             for(j=0; j!=cut_size+1; j++){//long
-                in_global_i[i*(cut_size+1)+j] = i*(cut_num+1)+j;
-                in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size] = i+cut_size+1 + (cut_num+1)*j;
-                in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size*2] = (i+cut_size+1)*(cut_num+1) + cut_size+j;
-                in_global_i[i*(cut_size+1)+j+(cut_size+1)*cut_size*3] = i + (j+cut_size)*(cut_num+1);
-
                 if(i==0){
                     bound_global_i[j] = (cut_num+1)*(cut_size-1)+j;
                     bound_global_i[j+cut_size*2] = (cut_num+1)*j + cut_size+1;
@@ -317,17 +314,14 @@ void divide_mesh(int* in_global_i, int *bound_global_i, int *out_global_i, int* 
             out_global_i[(cut_size*2+2)*3-1-i] = cut_size-1 + (cut_num+1)*(cut_num-i);
             out_global_i[(cut_size*2+2)*4-1-i] = cut_size + (cut_num+1)*(cut_num-i);
         }
-        in_global_i[(cut_size+1)*cut_size*4] = cut_size + cut_size*(cut_num+1);
         bound_global_i[cut_size*8] = cut_size*(cut_num+1+1);
         for(i=0; i!=3; i++){
             out_global_i[(cut_size*2+2)*4+i] = (cut_num+1)*(cut_num-i) + cut_size;
         }
         for(i=0;i!=3;i++){
-            in_nums[i] = cut_size*(cut_size+1);
             bound_nums[i] = cut_size*2;
             out_nums[i] = (cut_size+1)*2;
         }
-        in_nums[3] = cut_size*(cut_size+1)+1;
         bound_nums[3] = cut_size*2+1;
         out_nums[3] = (cut_size+1)*2 +2;
         for(i=0; i!=cut_size; i++)
