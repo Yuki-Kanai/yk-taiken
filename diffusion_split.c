@@ -208,7 +208,7 @@ void print_status(FILE *fp, const double* phi, int size, int i, double h){
 
 //insert array must have four times the maximum number of nodes of each type
 //in:node inside the submesh, bound, node: inside but shares lattices with other submeshes, out: outside but shares lattices with this submesh 
-void set_in_global(int *in_global_i, int* in_nums){
+void set_mesh_in(int *in_global_i, int* in_nums){
     int i,j;
     int cut_size;
     if(cut_num%2==1){
@@ -241,7 +241,7 @@ void set_in_global(int *in_global_i, int* in_nums){
     }
 }
 
-void set_bound_global(int *bound_global_i, int* bound_nums){
+void set_mesh_bound(int *bound_global_i, int* bound_nums){
  int i,j;
     int cut_size;
     if(cut_num%2==1){
@@ -284,7 +284,7 @@ void set_bound_global(int *bound_global_i, int* bound_nums){
     }
 }
 
-set_out_global(int *out_global_i, int* out_nums){
+set_mesh_out(int *out_global_i, int* out_nums){
  int i,j;
     int cut_size;
    if(cut_num%2==1){
@@ -500,7 +500,6 @@ int main(int argc, char* argv[]){
     
     set_bound(fix_bound, &fix_bound_num);
    
-
     int rank, process_num;
     MPI_INIT(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
@@ -509,7 +508,7 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "Error: Total number of threads must be 4 but now %d.\n", process_num);
         return 9;
     }
-    
+        
     int size = in_num[rank]+out_num[rank];
     NN = (double*)malloc(sizeof(double)*size*size); dNN = (double*)malloc(sizeof(double)*size*size);
     C = (double*)malloc(sizeof(double)*size*size);  L = (double*)malloc(sizeof(double)*size*size);
@@ -518,7 +517,7 @@ int main(int argc, char* argv[]){
     
     int* in_local_i, *bound_local_i, *out_local_i, *elem_local_i;
     in_local_i=(int*)malloc(sizeof(int)*in_nums[rank]); bound_local_i=(int*)malloc(sizeof(int)*bound_nums[rank]);
-    out_local_i=(int*)malloc(sizeof(int)*out_nums[rank]); elem_local_i=(int*)malloc(sizeof(int)*elem_nums[rank];
+    out_local_i=(int*)malloc(sizeof(int)*out_nums[rank]); elem_local_i=(int*)malloc(sizeof(int)*elem_nums[rank]);
     set_local_i(in_local_i, in_global_i, in_nums, bound_local_i, bound_global_i, bound_nums
             , out_local_i, out_global_i, out_nums, elem_local_i, elems, elem_nums, rank);
 
@@ -530,36 +529,40 @@ int main(int argc, char* argv[]){
     x = (double*)malloc(sizeof(double)*size);
     phi = (double*)malloc(sizeof(double)*size);
     temp = (double*)malloc(sizeof(double)*size);
-    if(
-    out = fopen("result.data","w");
-
-
+    if(rank==0)
+        out = fopen("result.data","w");
+        
     reset_matrix_double(phi, size);//set to 0degrees for initial condition
-    print_status(out, phi, size, 0, h);
+    if(rank==0)
+        print_status(out, phi, size, 0, h);
 
     for(i=0; i!= itmax; i++){
+        //get Right Hand Side
         mult_matrix(dNN, phi, b, size, size, 1);
         for(j=0; j!=size; j++)
             b[j] = -b[j];
         //to set dphi/dt to 0 for Dirichlet boundary
         for(j=0; j!=fix_bound_num; j++)
             b[fix_bound_i[j]] = 0;
-
         mult_matrix(S, b, temp, size, size, 1);
         mult_matrix(P, temp, b, size, size, 1);
-
+        
+        //solve
         forward_elimination(L, temp, b, size);
         backward_substitution(NN, x, temp, size);
-
+    
+        //get next phi
         for(j=0; j!=size; j++)
             phi[j] += x[j]*h;
         //For this case, the boundary is set by dphi/dt, so no change is required for vector b
         for(j=0; j!=fix_bound_num; j++){
             phi[fix_bound_i[j]] = fix_bound[j];
         }
+        if(rank==0){
         print_status(out, phi, size, i, h);
         if(i%(itmax/10)==0) 
             print2stdout(phi, size);
+        }
     }
     MPI_Finalize();
     printf("\n\n!!!Finished!!!\n\n");
