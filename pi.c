@@ -48,9 +48,12 @@ int main(int argc, char* argv[]){
          i++;
         threads = argv[2][0]-'0';
     }
-    }else imax = 1e4;
+    }else imax = 1e9;
     breaks =  (int*)malloc(sizeof(int)*(threads+1));
     gettimeofday(&s, NULL);
+
+    get_breaks(breaks, threads, imax);
+
     time_out( fp,&new_time, &old_time, s.tv_sec, &new_timeu, &old_timeu, s.tv_usec, threads, 0);
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
@@ -61,7 +64,7 @@ int main(int argc, char* argv[]){
     int count=0;
     srand(myid);
     int j = 0;
-    for(j=0; j!=imax; j++){
+    for(j=breaks[myid]; j!=breaks[myid+1]; j++){
         x = rand()/((double)RAND_MAX+1);
         y = rand()/((double)RAND_MAX+1);
         if(x*x + y*y < 1)
