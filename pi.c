@@ -21,7 +21,7 @@ void time_out(FILE* fp, int* newtime,int* oldtime, int nowtime,
 void get_breaks(int* breaks, int threads, int imax){
     int i;
     for(i=0; i!=threads; i++)
-        breaks[i] = i*imax/threads;
+        breaks[i] = (i*imax)/threads;
     breaks[threads] = imax;
 }
 
