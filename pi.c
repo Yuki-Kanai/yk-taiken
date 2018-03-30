@@ -39,15 +39,8 @@ int main(int argc, char* argv[]){
     gettimeofday(&s, NULL);
     int old_time=s.tv_sec, old_timeu=s.tv_usec;
     if(argc != 1){
-        while(isint(argv[1][i])){
-            temp_int = argv[1][i]-'0';
-            int j=0;
-            for(j=0; j!=i; j++)
-                temp_int *= 10;
-            imax += temp_int;
-            i++;
-            threads = argv[2][0]-'0';
-        }
+        threads = atoi(argv[2]);
+        imax = atoi(argv[1]);
     }else imax = 1e5;
     breaks =  (int*)malloc(sizeof(int)*(threads+1));
 
@@ -83,7 +76,7 @@ int main(int argc, char* argv[]){
     }
     if(myid==0){
         pi=4*(double)sum/imax;
-        //printf("%d %f\n",imax, pi);
+        printf("i=%d pi=%f\n",imax, pi);
 
     }
     MPI_Finalize(); 
