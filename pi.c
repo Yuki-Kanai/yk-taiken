@@ -48,7 +48,7 @@ int main(int argc, char* argv[]){
          i++;
         threads = argv[2][0]-'0';
     }
-    }else imax = 1e9;
+    }else imax = 1e5;
     breaks =  (int*)malloc(sizeof(int)*(threads+1));
     gettimeofday(&s, NULL);
 
