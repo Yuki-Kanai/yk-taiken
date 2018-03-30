@@ -40,26 +40,28 @@ int main(int argc, char* argv[]){
     int old_time=s.tv_sec, old_timeu=s.tv_usec;
     if(argc != 1){
         while(isint(argv[1][i])){
-        temp_int = argv[1][i]-'0';
-        int j=0;
-        for(j=0; j!=i; j++)
-            temp_int *= 10;
-         imax += temp_int;
-         i++;
-        threads = argv[2][0]-'0';
-    }
+            temp_int = argv[1][i]-'0';
+            int j=0;
+            for(j=0; j!=i; j++)
+                temp_int *= 10;
+            imax += temp_int;
+            i++;
+            threads = argv[2][0]-'0';
+        }
     }else imax = 1e5;
     breaks =  (int*)malloc(sizeof(int)*(threads+1));
-    gettimeofday(&s, NULL);
 
     get_breaks(breaks, threads, imax);
 
+    gettimeofday(&s, NULL);
     time_out( fp,&new_time, &old_time, s.tv_sec, &new_timeu, &old_timeu, s.tv_usec, threads, 0);
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-    gettimeofday(&s, NULL);
-    time_out( fp,&new_time, &old_time, s.tv_sec, &new_timeu, &old_timeu, s.tv_usec,threads, 1);
+    if(myid==0){
+        gettimeofday(&s, NULL);
+        time_out( fp,&new_time, &old_time, s.tv_sec, &new_timeu, &old_timeu, s.tv_usec,threads, 1);
+    }
     double x,y;
     int count=0;
     srand(myid);
@@ -70,19 +72,25 @@ int main(int argc, char* argv[]){
         if(x*x + y*y < 1)
             count++;
     }
-    gettimeofday(&s, NULL);
-    time_out( fp,&new_time, &old_time, s.tv_sec, &new_timeu, &old_timeu, s.tv_usec, threads, 2);
+    if(myid==0){
+        gettimeofday(&s, NULL);
+        time_out( fp,&new_time, &old_time, s.tv_sec, &new_timeu, &old_timeu, s.tv_usec, threads, 2);
+    }
     MPI_Reduce(&count, &sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    gettimeofday(&s, NULL);
-    time_out( fp,&new_time, &old_time, s.tv_sec, &new_timeu, &old_timeu, s.tv_usec, threads, 3);
+    if(myid==0){
+        gettimeofday(&s, NULL);
+        time_out( fp,&new_time, &old_time, s.tv_sec, &new_timeu, &old_timeu, s.tv_usec, threads, 3);
+    }
     if(myid==0){
         pi=4*(double)sum/imax;
         //printf("%d %f\n",imax, pi);
 
     }
     MPI_Finalize(); 
-    gettimeofday(&s, NULL);
-    time_out( fp,&new_time, &old_time, s.tv_sec, &new_timeu, &old_timeu, s.tv_usec,threads, 4);
-    return 0;
+    if(myid==0){
+        gettimeofday(&s, NULL);
+        time_out( fp,&new_time, &old_time, s.tv_sec, &new_timeu, &old_timeu, s.tv_usec,threads, 4);
+    }
     fclose(fp); 
+    return 0;
 }
